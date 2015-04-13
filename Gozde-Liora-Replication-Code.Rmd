@@ -86,7 +86,7 @@ model <- glmmPQL(ext_vote ~ male + age_1 + age_2 + age_4 + edu_1 + edu_2 + farme
 
 
 # Table 1
-
+![Table 1](figures/table1.png)
 ```{r}
 # Create vectors of coefficients, standard deviations, and variable names
 
@@ -109,33 +109,28 @@ table_1 <- stargazer(table_matrix, title = "TABLE 1 Support for the Extreme Righ
 ```
 
 # Figure 1 (Conditonal Effects of Unemployment and Immigration)
-
+![Figure 1](figures/fig1.png)
 ```{r}
 library(msm)
-asy <- seq(from = -.98, to = 4.46, by = .01) # vector with possible values for asylumseekers
-variable <- asy # to standardize the code
-slopes <- model$coef$fixed[17] + model$coef$fixed[36] * asy # Estimated slopes based on estimated coefficients of unemployment (17) and unemployment x immigration (36)
-estmean <- model$coef$fixed # Estimated means for each variable 
-var <- vcov(model) # Estimated variances
-se <- rep(NA, length(asy))
+asy <- seq(from = min(data$z_asylumseeker), to = max(data$z_asylumseeker), by = .01)) # vector with possible values for asylumseekers
 
+variable <- asy # identifying "asy" as the variable of interest so that the remaining code can be reused in the next graph with a different variable of interest specified
+slopes <- model$coef$fixed["z_unemp"] + model$coef$fixed["z_asylumseeker:z_unemp"] * asy # Estimated slopes based on estimated coefficients of unemployment (17) and unemployment x immigration (36)
+estmean <- model$coef$fixed # Estimated means for each variable 
+estvar <- vcov(model) # Estimated covariances
+se <- rep(NA, length(variable)) # Creating empty vector for predicted s.e. values
+# Creating a loop using the deltamethod function which approximates standard errors of transformation of parameters based on the given estimates of the mean and covariance (~ bootstrapping).
 for (i in 1:length(variable)) {
   j <- variable[i]
-  se[i] <- deltamethod (~ (x17) + (x36) * j, estmean, var)
+  se[i] <- deltamethod (~ (x17) + (x36) * j, estmean, estvar)
 }
+
 # Create confidence intervals and combine all values in matrix.
 upper <- slopes + 1.96 * se
 lower <- slopes - 1.96 * se
 variable.data <- cbind(variable, slopes, upper, lower)
 
-# Creating the first graph in base R 
-par(mfrow = c(2, 1))
-plot(variable, slopes, type = "l", lty = 1, ylim = c(-.2, .2), xlim = c(-2, 4), ylab = "Effect: Unemployment", xlab = "Asylumseekers", main = "The Conditional Effects of Unemployment and Immigration")
-points(variable, upper, type = "l", lty = 2)
-points(variable, lower, type = "l", lty = 2)
-points(variable, rep(0, length(variable)), type = "l", col = "black")
-
-# Creating the same graph with ggplot - much better looking.
+# Creating the first graph with ggplot
 
 variable.data <- data.frame(variable.data) # Turn matrix into data frame so that ggplot can read it.
 xtitle <- "Asylumseekers"
@@ -150,30 +145,23 @@ graph_1 <- ggplot(variable.data, aes(x = variable, y = slopes)) +
 
 #Figure 1, graph 2
 
-unemployment <- seq(from = -5.908098, to = 12.291902, by = .01) # vector with possible values for unemployment
-variable <- unemployment
-slopes <- model$coef$fixed[16] + model$coef$fixed[36] * variable # Estimated slopes based on estimated coefficients of unemployment (16) and unemployment x immigration (36)
-estmean <- model$coef$fixed # Estimated means for each variable 
-var <- vcov(model)
-se <- rep(NA, length(variable))
-
+unemployment <- seq(from = min(data$z_unemp), to = max(data$z_unemp), by = .01) # vector with possible values for unemployment
+variable <- unemployment # standardized label
+slopes <- model$coef$fixed["z_asylumseeker"] + model$coef$fixed["z_asylumseeker:z_unemp"] * variable # Estimated slopes based on estimated coefficients of asylumseekers (16) and unemployment x immigration (36)
+estmean <- model$coef$fixed # Estimated means for variables 
+estvar <- vcov(model) # Estimated covariances
+se <- rep(NA, length(variable)) # Creating empty vector for predicted s.e. values
+# Creating a loop with deltamethod to calculate estimated standard errors
 for (i in 1:length(variable)) {
   j <- variable[i]
-  se[i] <- deltamethod (~ (x16) + (x36) * j, estmean, var)
+  se[i] <- deltamethod (~ (x16) + (x36) * j, estmean, estvar)
 }
 # Create confidence intervals and combine all values in matrix.
 upper <- slopes + 1.96 * se
 lower <- slopes - 1.96 * se
 variable.data <- cbind(variable, slopes, upper, lower)
 
-# Creating second part of the figure in base R 
-
-plot(variable, slopes, type = "l", lty = 1, ylim=c(-.4, .6), xlim=c(-5, 15), ylab= "Effect: Asylum seekers", xlab = "Unemployment", main = "The Conditional Effects of Unemployment and Immigration")
-points(variable, upper, type = "l", lty = 2)
-points(variable, lower, type = "l", lty = 2)
-points(variable, rep(0, length(variable)), type = "l", col = "black")
-
-# Creating the same graph with ggplot:
+# Creating the second graph with ggplot:
 
 variable.data <- data.frame(variable.data) # Turn matrix into data frame so that ggplot can read it.
 xtitle <- "Unemployment"
@@ -197,34 +185,26 @@ graph_2
 ```
 
 # Figure 2 (Conditonal Effects of Salience and Variance)
-
+![Figure 2](figures/fig2.png)
 ```{r}
 # Graph 1
-salience <- seq(from = -3.108026, to = 21.872906, by=.1) # vector with possible values for salience
+salience <- seq(from = min(data$salience_mean_c), to = max(data$salience_mean_c), by=.1) # vector with possible values for salience
 variable <- salience
-slopes <- model$coef$fixed[21] + model$coef$fixed[39] * variable # Estimated slopes based on estimated coefficients of salience (21) and salience x variance (39)
-estmean <- model$coef$fixed # Estimated means for each variable 
-var <- vcov(model)
-se <- rep(NA, length(variable))
-
+slopes <- model$coef$fixed["var_c"] + model$coef$fixed["salience_mean_c:var_c"] * variable # Estimated slopes based on estimated coefficients of salience (21) and salience x variance (39)
+estmean <- model$coef$fixed # Estimated means for variables 
+estvar <- vcov(model) # Estimated covariances
+se <- rep(NA, length(variable)) # Creating empty vector for predicted s.e. values
+# Creating a loop with deltamethod to calculate estimated standard errors
 for (i in 1:length(variable)) {
   j <- variable[i]
-  se[i] <- deltamethod (~ (x21) + (x39)*j, estmean, var)
+  se[i] <- deltamethod (~ (x21) + (x39)*j, estmean, estvar)
 }
 # Create confidence intervals and combine all values in matrix.
 upper <- slopes + 1.96*se
 lower <- slopes - 1.96*se
 variable.data <- cbind(variable, slopes, upper, lower)
 
-
-# Creating the first graph in base R 
-
-plot(variable, slopes, type = "l", lty = 1, ylim=c(-.02, .03), xlim=c(-5, 20), ylab= "Effect: Variance", xlab = "Salience", main = "The Conditional Effects of Salience and Variance")
-points(variable, upper, type = "l", lty = 2)
-points(variable, lower, type = "l", lty = 2)
-points(variable, rep(0, length(variable)), type = "l", col = "black")
-
-# Creating the same graph with ggplot:
+# Creating the first graph with ggplot:
 
 variable.data <- data.frame(variable.data) # Turn matrix into data frame so that ggplot can read it.
 xtitle <- "Salience"
@@ -239,27 +219,24 @@ graph_3 <- ggplot(variable.data, aes(x = variable, y = slopes)) +
 
 # Second part of Figure 2:
 
-variance <- seq(from = -21.71426, to = 174.34497, by=10) # vector with possible values for variance
+variance <- seq(from = min(data$var_c), to = max(data$var_c), by=10) # vector with possible values for variance
 variable <- variance
-slopes <- model$coef$fixed[20] + model$coef$fixed[39] * variable # Estimated slopes based on estimated coefficients of salience (20) and salience x variance (39)
-se <- rep(NA, length(variable))
+slopes <- model$coef$fixed["salience_mean_c"] + model$coef$fixed["salience_mean_c:var_c"] * variable # Estimated slopes based on estimated coefficients of salience (20) and salience x variance (39)
+estmean <- model$coef$fixed # Estimated means for variables 
+estvar <- vcov(model) # Estimated covariances
+se <- rep(NA, length(variable)) # Creating empty vector for predicted s.e. values
+# Creating a loop with deltamethod to calculate estimated standard errors
+
 for (i in 1:length(variable)) {
   j <- variable[i]
-  se[i] <- deltamethod (~ (x20) + (x39) * j, estmean, var)
+  se[i] <- deltamethod (~ (x20) + (x39) * j, estmean, estvar)
 }
 # Create confidence intervals and combine all values in matrix.
 upper <- slopes + 1.96 * se
 lower <- slopes - 1.96 * se
 variable.data <- cbind(variable, slopes, upper, lower)
 
-# Creating the second graph in base R 
-par(mfrow = c(1,1))
-plot(variable, slopes, type = "l", lty = 1, ylim = c(-.05, .2), xlim = c(-50, 150), ylab = "Effect: Saliance", xlab = "Variance")
-points(variable, upper, type = "l", lty = 2)
-points(variable, lower, type = "l", lty = 2)
-points(variable, rep(0, length(variable)), type = "l", col = "black")
-
-# Creating the same graph with ggplot:
+# Creating the second graph with ggplot:
 
 variable.data <- data.frame(variable.data) # Turn matrix into data frame so that ggplot can read it.
 xtitle <- "Variance"
@@ -276,6 +253,3 @@ grid.arrange(graph_3, graph_4, ncol = 1)
 # Better scaled versions - not combined
 graph_3
 graph_4
-```
-
- 
