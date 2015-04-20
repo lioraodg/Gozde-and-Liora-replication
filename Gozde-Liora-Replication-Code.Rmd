@@ -253,3 +253,12 @@ grid.arrange(graph_3, graph_4, ncol = 1)
 # Better scaled versions - not combined
 graph_3
 graph_4
+`
+```
+
+EXTENSION
+
+```{r}
+
+```
+
