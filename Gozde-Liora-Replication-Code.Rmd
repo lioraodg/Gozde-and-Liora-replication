@@ -258,7 +258,47 @@ graph_4
 
 EXTENSION
 
-```{r}
+Our extension was inspired by Andreas Wimmer and Yuval Feinstein's 2010 paper "The Rise of the Nation-State Across the World, 1816-2001."  This paper seperately tests the prevailing explanatory theories of the rise of the nation-state as the dominant form of governance. Our extension takes a similar approach, testing the major theories of support for extreme right parties in the Western European context in separate models. We operationalize the variables in these theories using the available measures from the original data set.
 
+
+Model 1: Adorno Thesis (Personality Traits and Value Orientations)
+The first model is based on Theodor Adorno's 1950 theory that support for extreme right parties (in his case, fascist parties) originates from supporters' personality traits and value orientations, which make individuals more receptive to the appeals of extreme right parties.  We operationalize "personality traits and value orientations" using the individual level characteristics from our data set: gender, age, occupation, marital status, and self-placement on a left-right scale. 
+
+```{r}
+library(separationplot)
+library(Hmisc) 
+library(zoom)
+
+model_1 <- glm(ext_vote ~ male + age_1 + age_2 + age_4 + edu_1 + edu_2 + farmer_own + worker + retired + unemployed + partner + left_right_scale + country - 1, data = data)
+
+summary(model_1)
+
+somers2(model_1$fitted.values, model_1$y)
+pred <- model_1$fitted.values # Create vector with predicted values from the model
+actual <- model_1$y # Create vector with actual values for vote intention for extreme right parties
+dev.off()
+plot_model1 <- separationplot(pred = pred, actual = actual, type = "rect", line = T, show.expected = F) 
+
+```
+
+# Model 2: Parsons Thesis (Social Disintegration)
+```{r}
+model_2 <- glm(ext_vote ~ eu_neg + z_dem_satis + country - 1, data = data)
+pred <- model_2$fitted.values
+actual <- model_2$y
+dev.off()
+plot_model2 <- separationplot(pred = pred, actual = actual, type = "rect", line = T, show.expected = F)
+
+```
+
+# Model 3: Group Conflict Model (Various theories)
+
+```{r}
+model_3 <- glm(ext_vote ~ dispro_elect + federalism + z_asylumseeker + z_unemp + z_asylumseeker:z_unemp + z_replacement + z_replacement:z_unemp + z_replacement:z_asylumseeker + max_er + salience_mean_c + var_c + var_c:salience_mean_c + country - 1, data = data)
+
+pred <- model_3$fitted.values
+actual <- model_3$y
+dev.off()
+plot_model3 <- separationplot(pred = pred, actual = actual, type = "rect", line = T, show.expected = F)
 ```
 
